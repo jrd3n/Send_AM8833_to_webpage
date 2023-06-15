@@ -1,0 +1,76 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Example</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        .center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            /* width: max-content; */
+        }
+    </style>
+</head>
+<body>
+    <div class="center">
+        <canvas id="canvas" width="800" height="800"></canvas>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+        });
+
+        socket.on('udp_message', (data) => {
+            console.log('Received UDP message:', data);
+
+            const temperatureMatrix = JSON.parse(data);
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const squareSize = canvas.width / 8;
+
+            // Draw the 8x8 matrix
+            for (let x = 0; x < 8; x++) {
+                for (let y = 0; y < 8; y++) {
+                    const temperature = temperatureMatrix[y][x];
+                    const color = getColorForTemperature(temperature);
+
+                    // Set the color and fill the square
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x * squareSize, y * squareSize, squareSize, squareSize);
+
+                    // Write the temperature value in the square
+                    ctx.fillStyle = 'black';
+                    ctx.font = '12px Arial';
+                    ctx.fillText(temperature.toFixed(2), x * squareSize + 5, y * squareSize + 15);
+                }
+            }
+        });
+
+        function getColorForTemperature(temperature) {
+            // Define your own color mapping logic based on temperature values
+            // Example: Color gradient from blue (cold) to red (hot)
+            const minTemp = -10;
+            const maxTemp = 40;
+            const normalizedTemp = (temperature - minTemp) / (maxTemp - minTemp);
+            const red = Math.round(255 * normalizedTemp);
+            const blue = Math.round(255 * (1 - normalizedTemp));
+            return `rgb(${red}, 0, ${blue})`;
+        }
+    </script>
+</body>
+</html>
